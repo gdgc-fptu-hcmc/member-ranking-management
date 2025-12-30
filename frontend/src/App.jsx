@@ -1,42 +1,24 @@
-import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Route, Routes } from 'react-router-dom'
+import { routes } from '../routes';
 import './App.css'
 
+const renderRoutes = (routes) => {
+  console.log("Rendering routes:", routes);
+  return routes.map((r) => {
+    return (
+      <Route key={r.path} path={r.path} element={r.element}>
+        {r.children && renderRoutes(r.children)}
+      </Route>
+    );
+  });
+};
+
 function App() {
-  const [count, setCount] = useState(0)
-  const [message, setMessage] = useState('')
-
-  useEffect(() => {
-    fetch('/api/test')
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch((err) => console.error('Error fetching data:', err));
-  }, [])
-
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      {message && <p className="backend-message">Backend says: {message}</p>}
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <Routes>
+        {renderRoutes(routes)}
+      </Routes>
     </>
   )
 }
