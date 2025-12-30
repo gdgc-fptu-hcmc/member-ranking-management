@@ -1,7 +1,9 @@
-const LandingPage = () => {
-    return (
-       <h1>Welcome to the Landing Page</h1>
-    )
-}
-
+import AboutUsLanding from "../componets/AboutUsLanding";
+ const LandingPage = () => {
+   return (
+  <>
+    <AboutUsLanding />
+  </>
+   )
+ }
 export default LandingPage;
