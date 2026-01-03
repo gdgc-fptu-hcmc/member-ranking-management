@@ -21,6 +21,7 @@ function IntroSectionLanding() {
         <div className="mb-3">Scroll for more</div>
         <span className="material-symbols-rounded animate-scroll-down">keyboard_arrow_down</span>
       </div>
+      
     </div>
   );
 }

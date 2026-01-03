@@ -9,6 +9,7 @@ const LandingPage = () => {
         <NavBar />
         <IntroSectionLanding /> 
         <AboutUsLanding />
+        <AboutUsLanding />
       </>
     )
 }
