@@ -46,10 +46,10 @@ function NavBar() {
             <span>FPT University HCMC</span>
           </div>
         </div>
-        <div className="flex items-center gap-16 h-max">
+        <div className="flex items-center gap-10 h-full">
           {menuNav?.map((item) => (
             <div
-              className={`text-[18px] px-4 py-6 font-bold cursor-pointer ${item.color}`}
+              className={`flex items-center text-[18px] px-6 py-4 font-bold cursor-pointer ${item.color} hover:bg-[#0001] h-full  transition-colors duration-200`}
               key={item.id}
               onClick={()=>{
                 const target = document.getElementById(item.id);
@@ -64,8 +64,8 @@ function NavBar() {
               {item.name}
             </div>
           ))}
-          <div>
-            <img className="h-5" src={assist} alt="assist-logo" />
+          <div className="flex items-center text-[18px] px-6 py-4 font-bold cursor-pointer hover:bg-[#0001] h-full  transition-colors duration-200">
+            <img className="h-10  " src={assist} alt="assist-logo" />
           </div>
         </div>
       </div>

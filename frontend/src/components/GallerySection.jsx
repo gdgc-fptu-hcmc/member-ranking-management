@@ -23,7 +23,7 @@ const images = [
 ];
 function GallerySection() {
   return (
-    <div className="w-[calc(100%-80px*2)] max-w-[1500px] mx-auto my-6 min-h-[100px]:">
+    <div className="w-[calc(100%-80px*2)] max-w-[1500px] mx-auto my-6 min-h-[100px]">
       <h1 id="section-gallery" className="text-center text-[45px] font-bold text-[#fabc05] mb-6">
         Gallery
       </h1>
