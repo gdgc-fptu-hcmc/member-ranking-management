@@ -8,7 +8,7 @@ const menuNav = [
   { name: "Gallery", id: "section-gallery", color: "text-[#fabc05]" },
   { name: "FAQ", id: "section-faq", color: "text-[#e94436]" },
 ];
-function NavBar() {
+function NavBar({ onChatToggle }) {
   const [opacity, setOpacity] = useState(0);
 
   useEffect(() => {
@@ -64,7 +64,10 @@ function NavBar() {
               {item.name}
             </div>
           ))}
-          <div className="flex items-center text-[18px] px-6 py-4 font-bold cursor-pointer hover:bg-[#0001] h-full  transition-colors duration-200">
+          <div 
+            className="flex items-center text-[18px] px-6 py-4 font-bold cursor-pointer hover:bg-[#0001] h-full  transition-colors duration-200"
+            onClick={onChatToggle}
+          >
             <img className="h-10  " src={assist} alt="assist-logo" />
           </div>
         </div>
