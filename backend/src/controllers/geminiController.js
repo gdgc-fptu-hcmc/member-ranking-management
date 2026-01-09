@@ -16,6 +16,14 @@ export const getGeminiResponse = async (req, res) => {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: message,
+      config: {
+        systemInstruction: "You are a helpful assistant for a university's Google Developer Group (GDG) club. Provide concise and relevant answers about the club's activities, membership, events, and other related information.",
+        temperature: 1,
+        thinkingConfig: {
+            includeThoughts: false,
+            thinkingBudget: "minimal"
+        }
+    }
     });
 
     res.json({ reply: response.text });
