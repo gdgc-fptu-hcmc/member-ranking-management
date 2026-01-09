@@ -13,8 +13,7 @@ import { useState } from "react";
 
 const LandingPage = () => {
   const [isChatBoxOpen, setIsChatBoxOpen] = useState(false);
-
-  return (
+    return (
     <>
       <NavBar onChatToggle={() => setIsChatBoxOpen((prev) => !prev)} />
       <IntroSectionLanding />
@@ -23,7 +22,7 @@ const LandingPage = () => {
       <MemberIntro />
       <EventLanding />
       <GallerySection />
-      <FAQSections />
+      <FAQSections onChatToggle={() => setIsChatBoxOpen((prev) => !prev)} />
       <Footer />
       <ArrowButton />
       <AssistantChatbox isOpen={isChatBoxOpen} onClose={() => setIsChatBoxOpen(false)} />
@@ -32,3 +31,6 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+  
+
+  
