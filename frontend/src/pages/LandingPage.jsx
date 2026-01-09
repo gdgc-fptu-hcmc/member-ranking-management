@@ -22,7 +22,7 @@ const LandingPage = () => {
       <MemberIntro />
       <EventLanding />
       <GallerySection />
-      <FAQSections />
+      <FAQSections onChatToggle={() => setIsChatBoxOpen((prev) => !prev)} />
       <Footer />
       <ArrowButton />
       <AssistantChatbox isOpen={isChatBoxOpen} onClose={() => setIsChatBoxOpen(false)} />
