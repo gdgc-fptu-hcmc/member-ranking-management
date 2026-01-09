@@ -1,8 +1,5 @@
 import React from "react";
 
-import Icon from "./Icon";
-import "./MemberIntro.css";
-
 const paths = [
   {
     fill: "#E94436",
@@ -23,11 +20,7 @@ const paths = [
 ];
 
 const teamData = [
-  {
-    id: "minhvc",
-    name: "Vo Cao Minh",
-    position: "Leader",
-  },
+  { id: "minhvc", name: "Vo Cao Minh", position: "Leader" },
   { id: "longtvh", name: "Trần Vũ Hoàng Long", position: "Member" },
   { id: "quocta", name: "Trần Ái Quốc", position: "Member" },
   { id: "hungnt", name: "Nguyễn Thành Hưng", position: "Member" },
@@ -37,48 +30,69 @@ const teamData = [
 
 const MemberIntro = () => {
   return (
-    <div className="team-members-section">
-      <h1 className="section-title">Meet Our Team</h1>
-      <div className="members-grid">
+    <section className="py-12 px-5 text-center bg-white">
+      <h1 className="text-4xl font-bold mb-10 text-gray-800">Meet Our Team</h1>
+
+      <div className="flex flex-wrap justify-center gap-10">
         {teamData.map((member, i) => (
-          <div className="member-frame" key={member.id}>
-            <SVGClipImage
-              url={`/members/${member.id}.png`} // Đảm bảo bạn có ảnh .png trong public/members/
-              path={paths[i % paths.length]}
-              id={member.id}
-            />
-            <div className="member-info">
-              <h3 className="member-name">{member.name}</h3>
-              <p className="member-pos">{member.position}</p>
+          <div
+            key={member.id}
+            className="group w-[200px] cursor-pointer transition-transform duration-500 hover:-translate-y-2"
+          >
+            <div className="relative w-[200px] h-[220px] mb-4 !overflow-visible">
+              <SVGClipImage
+                url={`/members/${member.id}.png`}
+                path={paths[i % paths.length]}
+                id={member.id}
+              />
+            </div>
+
+            <div className="relative z-10 bg-white pt-2">
+              <h3 className="text-lg font-bold text-gray-800 uppercase tracking-tight leading-tight">
+                {member.name}
+              </h3>
+              <p className="text-sm text-gray-500 font-medium">
+                {member.position}
+              </p>
             </div>
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 
-// Helper Component để xử lý cắt ảnh
 const SVGClipImage = ({ url, path: pathData, id }) => {
   return (
-    <svg viewBox="0 0 200 200" className="blob-svg">
+    <svg
+      viewBox="0 0 200 200"
+      className="w-full h-full !overflow-visible transition-transform duration-500 ease-out group-hover:scale-110"
+    >
       <defs>
         <clipPath id={`clip-${id}`}>
           <path d={pathData.d} transform="translate(100 100)" />
+
+          <rect x="-100" y="-200" width="400" height="300" />
         </clipPath>
       </defs>
+
       <path
         d={pathData.d}
         fill={pathData.fill}
+        className="opacity-90 transition-opacity duration-300 group-hover:opacity-100"
         transform="translate(100 100)"
-        opacity="0.2"
       />
+
+      {/* Ảnh nhân vật */}
       <image
         href={url}
-        width="100%"
-        height="100%"
+        width="180"
+        height="240"
+        x="10"
+        y="-40"
         clipPath={`url(#clip-${id})`}
-        preserveAspectRatio="xMidYMid slice"
+        preserveAspectRatio="xMidYMin slice"
+        className="transition-transform duration-500 ease-out group-hover:-translate-y-3"
       />
     </svg>
   );
