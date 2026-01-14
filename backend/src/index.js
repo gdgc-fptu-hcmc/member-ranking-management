@@ -1,22 +1,38 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import chatRoutes from "./routes/chatRoutes.js";
+import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
 
-// 1. Load config
+import chatRoutes from "./routers/chatRoutes.js";
+import authRouter from "./routers/auth.js";
+import userRouter from "./routers/user.js";
+
+// 1) Load config
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const MONGO_URL = process.env.MONGO_URL;
 
-// 2. Middleware (Allows Frontend to talk to Backend)
-app.use(cors());
+// 2) Middleware
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+app.use(cookieParser());
 app.use(express.json());
 
-// Routes
+// =====================
+// 3) Routes (GIỮ HẾT CŨ)
+// =====================
+
+// Chat AI route cũ
 app.use("/api/assistant", chatRoutes);
 
-// 3. Test Routes (No Database needed)
+// Test routes cũ
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
@@ -25,11 +41,7 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "Hello from the backend! (No DB connected)", id: "1" });
 });
 
-// 4. Start Server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
-// Thêm danh sách dữ liệu mẫu vào file backend/src/index.js
+// Data mẫu cũ
 const members = [
   {
     id: 1,
@@ -61,9 +73,32 @@ const members = [
   },
 ];
 
-// Route lấy danh sách thành viên và sắp xếp theo thứ hạng
+// Route members cũ
 app.get("/api/members", (req, res) => {
-  // Sắp xếp giảm dần theo số điểm
   const sortedMembers = [...members].sort((a, b) => b.points - a.points);
   res.json(sortedMembers);
 });
+
+// =====================
+// 4) Routes (MỚI: AUTH)
+// =====================
+app.use("/v1/auth", authRouter);
+app.use("/v1/user", userRouter);
+
+// 5) Start server (kết nối DB rồi listen 1 lần)
+async function start() {
+  try {
+    if (!MONGO_URL) throw new Error("MONGO_URL is undefined. Check .env");
+    await mongoose.connect(MONGO_URL);
+    console.log("✅ Connected to MongoDB");
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err.message);
+    process.exit(1);
+  }
+}
+
+start();

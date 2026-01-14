@@ -26,7 +26,7 @@ const content = [
     borderColor: "#fabc05"
   },
 ];
-const FAQSections = () => {
+const FAQSections = ({onChatToggle}) => {
   return (
     <div className="max-w-375 my-6 mx-auto w-[calc(100%-80px*2)]">
       <h1 className="text-5xl text-center text-[#1a2a56] font-bold mb-5" id="section-faq">
@@ -34,7 +34,9 @@ const FAQSections = () => {
       </h1>
       <div className="flex h-25 border border-solid border-[#e94436] rounded-xl items-center justify-between py-0 px-8 my-4 mx-16 shadow-md text-[18px]">
         Try using our AI powered Assistant to help you answer your inqueries
-        <div className="py-2 px-4 border-2 border-solid border-[#1a2a56] hover:bg-[#1a2a56] hover:text-white transition-colors duration-200">
+        <div className="py-2 px-4 border-2 border-solid border-[#1a2a56] hover:bg-[#1a2a56] hover:text-white transition-colors duration-200"
+         onClick={onChatToggle}
+        >
           Open chat
         </div>
       </div>
