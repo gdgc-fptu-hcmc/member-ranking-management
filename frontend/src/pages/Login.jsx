@@ -65,7 +65,7 @@ export default function Login() {
             onChange={onChange}
           />
 
-          <button className="w-full bg-black text-white rounded-xl py-2 font-semibold">
+          <button className="w-full bg-black text-white rounded-xl py-2 font-semibold hover:bg-gray-800 transition-colors cursor-pointer">
             Login
           </button>
         </form>

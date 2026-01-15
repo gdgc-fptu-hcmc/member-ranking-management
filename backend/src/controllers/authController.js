@@ -27,26 +27,26 @@ const authController = {
     }
   },
   //generate ACCESS TOKEN
-    generateAccessToken: (user)=>{
-        return jwt.sign(
-            {
-            id: user.id,
-            roles: user.roles,
-          },
-          process.env.JWT_ACCESS_KEY,
-          { expiresIn: "30d" }
-        );
-    },
-    generateRefreshToken: (user)=>{
-        return jwt.sign(
-          {
-            id: user.id,
-            roles: user.roles,
-          },
-          process.env.JWT_REFRESH_KEY,
-          { expiresIn: "365d" }
-        );
-    },
+  generateAccessToken: (user) => {
+    return jwt.sign(
+      {
+        id: user.id,
+        roles: user.roles,
+      },
+      process.env.JWT_ACCESS_KEY,
+      { expiresIn: "30d" }
+    );
+  },
+  generateRefreshToken: (user) => {
+    return jwt.sign(
+      {
+        id: user.id,
+        roles: user.roles,
+      },
+      process.env.JWT_REFRESH_KEY,
+      { expiresIn: "365d" }
+    );
+  },
   //Login
   loginUser: async (req, res) => {
     try {
@@ -66,10 +66,10 @@ const authController = {
         const refreshToken = authController.generateRefreshToken(user);
         refreshTokens.push(refreshToken);
         res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            path:"/",
-            sameSite: "strict",
-        })
+          httpOnly: true,
+          path: "/",
+          sameSite: "strict",
+        });
         const { password, ...others } = user._doc;
         res.status(200).json({ ...others, accessToken });
       }
@@ -79,38 +79,39 @@ const authController = {
   },
 
   //refreshToken
-  requestRefreshToken: async(req, res) => {
+  requestRefreshToken: async (req, res) => {
     //Take refresh token from user
     const refreshToken = req.cookies.refreshToken;
-    if(!refreshToken) return res.status(200).json("You're not authenticated");
-    if(!refreshTokens.includes(refreshToken)){
-        return res.status(200).json("Refresh token is not valid");
+    if (!refreshToken) return res.status(200).json("You're not authenticated");
+    if (!refreshTokens.includes(refreshToken)) {
+      return res.status(200).json("Refresh token is not valid");
     }
-    jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY, (err, user)=>{
-        if(err){
-            console.log(err);
-        }
-        refreshTokens = refreshTokens.filter((token)=> token !== refreshToken);
-        //create new accessToken, refreshToken
-        const newAccessToken = authController.generateAccessToken(user);
-        const newRefreshToken = authController.generateRefreshToken(user);
-        refreshTokens.push(newRefreshToken);
-        
-        res.cookie("refreshToken", newRefreshToken, {
-            httpOnly: true,
-            path:"/",
-            sameSite: "strict",
-        });
-        return res.status(200).json({accessToken: newAccessToken});
-    })
+    jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY, (err, user) => {
+      if (err) {
+        console.log(err);
+      }
+      refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+      //create new accessToken, refreshToken
+      const newAccessToken = authController.generateAccessToken(user);
+      const newRefreshToken = authController.generateRefreshToken(user);
+      refreshTokens.push(newRefreshToken);
+
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        path: "/",
+        sameSite: "strict",
+      });
+      return res.status(200).json({ accessToken: newAccessToken });
+    });
   },
 
   userLogout: async (req, res) => {
     res.clearCookie("refreshToken");
-    refreshTokens = refreshTokens.filter( token => token !== req.cookies.refreshToken);
+    refreshTokens = refreshTokens.filter(
+      (token) => token !== req.cookies.refreshToken
+    );
     return res.status(200).json("logout");
-  }
-
+  },
 };
 //Store token:
 //1) Local storage:
@@ -119,6 +120,6 @@ const authController = {
 //CSRF --> samesite
 //3) REDUX STORE -> AccessToken
 //HTTPOnly cookies -> refreshToken
-//Dùng BFF PARTERN 
+//Dùng BFF PARTERN
 
 export default authController;
