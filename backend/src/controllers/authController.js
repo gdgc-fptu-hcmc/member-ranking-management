@@ -64,7 +64,8 @@ const authController = {
       if (user && validPassword) {
         const accessToken = authController.generateAccessToken(user);
         const refreshToken = authController.generateRefreshToken(user);
-        refreshTokens.push(refreshToken);
+        user.refreshToken = refreshToken;
+        await user.save();
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true,
           path: "/",
@@ -80,38 +81,77 @@ const authController = {
 
   //refreshToken
   requestRefreshToken: async (req, res) => {
-    //Take refresh token from user
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) return res.status(200).json("You're not authenticated");
-    if (!refreshTokens.includes(refreshToken)) {
-      return res.status(200).json("Refresh token is not valid");
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json("You're not authenticated");
     }
-    jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY, (err, user) => {
-      if (err) {
-        console.log(err);
-      }
-      refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
-      //create new accessToken, refreshToken
-      const newAccessToken = authController.generateAccessToken(user);
-      const newRefreshToken = authController.generateRefreshToken(user);
-      refreshTokens.push(newRefreshToken);
 
-      res.cookie("refreshToken", newRefreshToken, {
-        httpOnly: true,
-        path: "/",
-        sameSite: "strict",
-      });
-      return res.status(200).json({ accessToken: newAccessToken });
-    });
-  },
+    //  verify chữ ký refresh token
+    jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_KEY,
+      async (err, decoded) => {
+        if (err) {
+          return res.status(403).json("Refresh token is not valid");
+        }
+
+        // tìm user có refreshToken này
+        const user = await User.findOne({ refreshToken });
+        if (!user) {
+          return res.status(403).json("Refresh token is not valid");
+        }
+
+        // tạo token mới
+        const newAccessToken = authController.generateAccessToken(user);
+        const newRefreshToken = authController.generateRefreshToken(user);
+
+        // rotate refresh token (ghi đè)
+        user.refreshToken = newRefreshToken;
+        await user.save();
+
+        res.cookie("refreshToken", newRefreshToken, {
+          httpOnly: true,
+          path: "/",
+          sameSite: "strict",
+        });
+
+        return res.status(200).json({
+          accessToken: newAccessToken,
+          roles: user.roles,
+          id: user._id.toString(),
+        });
+      }
+    );
+  } catch (error) {
+    return res.status(500).json(error.message);
+  }
+},
+
 
   userLogout: async (req, res) => {
-    res.clearCookie("refreshToken");
-    refreshTokens = refreshTokens.filter(
-      (token) => token !== req.cookies.refreshToken
-    );
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (refreshToken) {
+      const user = await User.findOne({ refreshToken });
+      if (user) {
+        user.refreshToken = null;
+        await user.save();
+      }
+    }
+
+    res.clearCookie("refreshToken", {
+      path: "/",
+      sameSite: "strict",
+    });
+
     return res.status(200).json("logout");
-  },
+  } catch (error) {
+    return res.status(500).json(error.message);
+  }
+},
+
 };
 //Store token:
 //1) Local storage:
