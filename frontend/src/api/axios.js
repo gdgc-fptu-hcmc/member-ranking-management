@@ -1,6 +1,6 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "/", // use relative path
+  baseURL: "http://localhost:5000", // use relative path
   withCredentials: true,
 });

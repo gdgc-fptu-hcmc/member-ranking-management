@@ -71,8 +71,9 @@ const authController = {
           path: "/",
           sameSite: "strict",
         });
-        const { password, ...others } = user._doc;
-        res.status(200).json({ ...others, accessToken });
+        const safeUser = await User.findById(user._id).select("-password -refreshToken");
+        res.status(200).json({
+          user: safeUser, accessToken, roles: user.roles });
       }
     } catch (error) {
       res.status(500).json(error);
@@ -115,11 +116,11 @@ const authController = {
           path: "/",
           sameSite: "strict",
         });
-
+        const safeUser = await User.findById(user._id).select("-password -refreshToken");
         return res.status(200).json({
           accessToken: newAccessToken,
           roles: user.roles,
-          id: user._id.toString(),
+          user : safeUser,
         });
       }
     );

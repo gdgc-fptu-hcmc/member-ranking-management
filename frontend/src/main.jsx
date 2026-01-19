@@ -7,13 +7,11 @@ import { AuthProvider } from "./auth/AuthContext.jsx";
 import AuthBootstrap from "./auth/AuthBootstrap.jsx";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <AuthBootstrap>
-          <App />
-        </AuthBootstrap>
-      </AuthProvider>
-    </BrowserRouter>
-  </StrictMode>
+  <BrowserRouter>
+    <AuthProvider>
+      <AuthBootstrap>
+        <App />
+      </AuthBootstrap>
+    </AuthProvider>
+  </BrowserRouter>,
 );

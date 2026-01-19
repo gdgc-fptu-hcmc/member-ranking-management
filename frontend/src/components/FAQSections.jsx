@@ -44,6 +44,7 @@ const FAQSections = ({onChatToggle}) => {
         {
             content.map((item)=>(
                 <FAQFrame
+                key={item.id}
                 question={item.question}
                 answer={item.answer}
                 borderColor={item.borderColor}

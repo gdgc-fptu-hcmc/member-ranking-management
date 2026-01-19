@@ -23,10 +23,9 @@ const middlewareController = {
   verifyTokenAndAdminAuth: (req, res, next) => {
     middlewareController.verifyToken(req, res, () => {
       const roles = req.user?.roles ?? []; // ✅ không crash
-      const isSelf = req.user?.id === req.params.id;
       const isAdmin = roles.includes("admin");
       const isBDH = roles.includes("bdh");
-      if (isSelf || isAdmin || isBDH) {
+      if ( isAdmin || isBDH) {
         next();
       } else {
         res.status(403).json("you're not allowed to delete other");
