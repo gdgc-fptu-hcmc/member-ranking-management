@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 
 import chatRoutes from "./routers/chatRoutes.js";
@@ -13,7 +12,6 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGO_URL = process.env.MONGO_URL;
 
 // 2) Middleware
 app.use(
@@ -88,15 +86,11 @@ app.use("/v1/user", userRouter);
 // 5) Start server (kết nối DB rồi listen 1 lần)
 async function start() {
   try {
-    if (!MONGO_URL) throw new Error("MONGO_URL is undefined. Check .env");
-    await mongoose.connect(MONGO_URL);
-    console.log("✅ Connected to MongoDB");
-
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   } catch (err) {
-    console.error("❌ MongoDB connection error:", err.message);
+    console.log("error running on backend")
     process.exit(1);
   }
 }
