@@ -1,29 +1,49 @@
 import bcrypt from "bcrypt";
-import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
 import dotenv from "dotenv";
+import { pool } from "../config/connectDB.js";
 dotenv.config();
 
 let refreshTokens = [];
 const authController = {
   registerUser: async (req, res) => {
     try {
+      const { username, email, password, avatar, isMale, address, clubRole } =
+        req.body;
+
+      if (!username || !email || !password) {
+        return res
+          .status(400)
+          .json({ error: "username, email, password are required" });
+      }
+
       const salt = await bcrypt.genSalt(10);
-      const hashed = await bcrypt.hash(req.body.password, salt);
+      const hashed = await bcrypt.hash(password, salt);
 
-      //create new user
-      const newUser = await new User({
-        username: req.body.username,
-        email: req.body.email,
-        password: hashed,
-      });
+      const {rows} = await pool.query(
+        `
+        INSERT INTO users
+        (username, email, password)
+        VALUES($1, $2, $3)
+        RETURNING *;
+        `,
+        [
+          username,
+          email,
+          hashed,
+        ],
+      )
 
-      //save to DB
-      const user = await newUser.save();
-      res.status(200).json(user);
+      return res.status(200).json({ user: rows[0] });
     } catch (error) {
-      res.status(500).json(error);
+      
+      //duplicate username/email
+      if(error.code === "23505"){
+        return res.status(400).json({error: "Username or email has already existed"});
+      }
+      console.log("Register error: ", error);
+      res.status(500).json({error: error.message});
     }
   },
   //generate ACCESS TOKEN
@@ -34,7 +54,7 @@ const authController = {
         roles: user.roles,
       },
       process.env.JWT_ACCESS_KEY,
-      { expiresIn: "30d" }
+      { expiresIn: "30d" },
     );
   },
   generateRefreshToken: (user) => {
@@ -44,36 +64,46 @@ const authController = {
         roles: user.roles,
       },
       process.env.JWT_REFRESH_KEY,
-      { expiresIn: "365d" }
+      { expiresIn: "365d" },
     );
   },
   //Login
   loginUser: async (req, res) => {
     try {
-      const user = await User.findOne({ username: req.body.username });
+      const { username, password } = req.body;
+      const {rows} = await pool.query(
+        "SELECT * FROM users WHERE username = $1 LIMIT 1",
+        [username]
+      )
+      const user = rows[0];
       if (!user) {
         return res.status(404).json("Wrong username");
       }
-      const validPassword = await bcrypt.compare(
-        req.body.password,
-        user.password
-      );
+      const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) {
         return res.status(404).json("Wrong password");
       }
       if (user && validPassword) {
         const accessToken = authController.generateAccessToken(user);
         const refreshToken = authController.generateRefreshToken(user);
-        user.refreshToken = refreshToken;
-        await user.save();
+        // lưu refresh token vào DB
+        await pool.query(
+          "UPDATE users SET refresh_token = $1 WHERE id = $2",
+          [refreshToken, user.id]
+        )
+        // set cookie refreshToken
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true,
           path: "/",
           sameSite: "strict",
         });
-        const safeUser = await User.findById(user._id).select("-password -refreshToken");
+        // trả user safe (bỏ password + refresh_token)
+        const { password: _pw, refresh_token: _rt, ...safeUser } = user;
         res.status(200).json({
-          user: safeUser, accessToken, roles: user.roles });
+          user: safeUser,
+          accessToken,
+          roles: user.roles,
+        });
       }
     } catch (error) {
       res.status(500).json(error);
@@ -82,77 +112,80 @@ const authController = {
 
   //refreshToken
   requestRefreshToken: async (req, res) => {
-  try {
-    const refreshToken = req.cookies?.refreshToken;
-    if (!refreshToken) {
-      return res.status(401).json("You're not authenticated");
-    }
-
-    //  verify chữ ký refresh token
-    jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_KEY,
-      async (err, decoded) => {
-        if (err) {
-          return res.status(403).json("Refresh token is not valid");
-        }
-
-        // tìm user có refreshToken này
-        const user = await User.findOne({ refreshToken });
-        if (!user) {
-          return res.status(403).json("Refresh token is not valid");
-        }
-
-        // tạo token mới
-        const newAccessToken = authController.generateAccessToken(user);
-        const newRefreshToken = authController.generateRefreshToken(user);
-
-        // rotate refresh token (ghi đè)
-        user.refreshToken = newRefreshToken;
-        await user.save();
-
-        res.cookie("refreshToken", newRefreshToken, {
-          httpOnly: true,
-          path: "/",
-          sameSite: "strict",
-        });
-        const safeUser = await User.findById(user._id).select("-password -refreshToken");
-        return res.status(200).json({
-          accessToken: newAccessToken,
-          roles: user.roles,
-          user : safeUser,
-        });
+    try {
+      const refreshToken = req.cookies?.refreshToken;
+      if (!refreshToken) {
+        return res.status(401).json("You're not authenticated");
       }
-    );
-  } catch (error) {
-    return res.status(500).json(error.message);
-  }
-},
 
+      //  verify chữ ký refresh token
+      jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_KEY,
+        async (err, decoded) => {
+          if (err) {
+            return res.status(403).json("Refresh token is not valid");
+          }
+
+          // tìm user theo refresh_token trong DB
+          const{rows} = await pool.query(
+            "SELECT * FROM users WHERE  refresh_token = $1",
+            [refreshToken]
+          )
+          const user = rows[0];
+          if (!user) {
+            return res.status(403).json("Refresh token is not valid");
+          }
+
+          // tạo token mới
+          const newAccessToken = authController.generateAccessToken(user);
+          const newRefreshToken = authController.generateRefreshToken(user);
+
+          // rotate refresh token (ghi đè)
+           await pool.query(
+            "UPDATE users SET refresh_token = $1 WHERE id = $2",
+            [newAccessToken, user.id]
+           )
+
+          res.cookie("refreshToken", newRefreshToken, {
+            httpOnly: true,
+            path: "/",
+            sameSite: "strict",
+          });
+         const { password: _pw, refresh_token: _rt, ...safeUser } = user;
+          return res.status(200).json({
+            accessToken: newAccessToken,
+            roles: user.roles,
+            user: safeUser,
+          });
+        },
+      );
+    } catch (error) {
+      return res.status(500).json(error.message);
+    }
+  },
 
   userLogout: async (req, res) => {
-  try {
-    const refreshToken = req.cookies?.refreshToken;
+    try {
+      const refreshToken = req.cookies?.refreshToken;
 
-    if (refreshToken) {
-      const user = await User.findOne({ refreshToken });
-      if (user) {
-        user.refreshToken = null;
-        await user.save();
+      if (refreshToken) {
+        await pool.query(
+          "UPDATE users SET refresh_token = NULL WHERE refresh_token = $1",
+          [refreshToken],
+        );
       }
+
+      res.clearCookie("refreshToken", {
+        path: "/",
+        sameSite: "strict",
+      });
+
+      return res.status(200).json("logout");
+    } catch (error) {
+      return res.status(500).json(error.message);
     }
-
-    res.clearCookie("refreshToken", {
-      path: "/",
-      sameSite: "strict",
-    });
-
-    return res.status(200).json("logout");
-  } catch (error) {
-    return res.status(500).json(error.message);
-  }
-},
-
+  },
 };
 //Store token:
 //1) Local storage:
