@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import dotenv from "dotenv";
-import { supabase } from "../lib/supabase.js";
+import { pool } from "../config/connectDB.js";
 dotenv.config();
 
 let refreshTokens = [];
@@ -21,32 +21,29 @@ const authController = {
       const salt = await bcrypt.genSalt(10);
       const hashed = await bcrypt.hash(password, salt);
 
-      const { data, error } = await supabase
-        .from("users")
-        .insert({
+      const {rows} = await pool.query(
+        `
+        INSERT INTO users
+        (username, email, password)
+        VALUES($1, $2, $3)
+        RETURNING *;
+        `,
+        [
           username,
           email,
-          password: hashed,
-          // roles mặc định ['member'] theo DB
-          avatar: avatar ?? null,
-          is_male: typeof isMale === "boolean" ? isMale : null,
-          address: address ?? null,
-          club_role: clubRole ?? null,
-          join_club_at: null,
-        })
-        .select(
-          "id, username, email, roles, club_role, total_gems, regular_session_count, is_active, join_club_at, avatar, is_male, address, created_at, updated_at",
-        )
-        .single();
+          hashed,
+        ],
+      )
 
-      if (error) {
-        // unique violation thường sẽ vào đây (username/email trùng)
-        return res.status(400).json({ error: error.message });
-      }
-
-      return res.status(200).json({ user: data });
+      return res.status(200).json({ user: rows[0] });
     } catch (error) {
-      res.status(500).json(error);
+      
+      //duplicate username/email
+      if(error.code === "23505"){
+        return res.status(400).json({error: "Username or email has already existed"});
+      }
+      console.log("Register error: ", error);
+      res.status(500).json({error: error.message});
     }
   },
   //generate ACCESS TOKEN
@@ -74,13 +71,12 @@ const authController = {
   loginUser: async (req, res) => {
     try {
       const { username, password } = req.body;
-      const { data: user, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("username", username)
-        .single();
-
-      if (!user || error) {
+      const {rows} = await pool.query(
+        "SELECT * FROM users WHERE username = $1 LIMIT 1",
+        [username]
+      )
+      const user = rows[0];
+      if (!user) {
         return res.status(404).json("Wrong username");
       }
       const validPassword = await bcrypt.compare(password, user.password);
@@ -91,11 +87,10 @@ const authController = {
         const accessToken = authController.generateAccessToken(user);
         const refreshToken = authController.generateRefreshToken(user);
         // lưu refresh token vào DB
-        await supabase
-          .from("users")
-          .update({ refresh_token: refreshToken })
-          .eq("id", user.id);
-
+        await pool.query(
+          "UPDATE users SET refresh_token = $1 WHERE id = $2",
+          [refreshToken, user.id]
+        )
         // set cookie refreshToken
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true,
@@ -133,11 +128,11 @@ const authController = {
           }
 
           // tìm user theo refresh_token trong DB
-        const { data: user } = await supabase
-          .from("users")
-          .select("*")
-          .eq("refresh_token", refreshToken)
-          .single();
+          const{rows} = await pool.query(
+            "SELECT * FROM users WHERE  refresh_token = $1",
+            [refreshToken]
+          )
+          const user = rows[0];
           if (!user) {
             return res.status(403).json("Refresh token is not valid");
           }
@@ -147,7 +142,10 @@ const authController = {
           const newRefreshToken = authController.generateRefreshToken(user);
 
           // rotate refresh token (ghi đè)
-         await supabase.from("users").update({ refresh_token: newRefreshToken }).eq("id", user.id);
+           await pool.query(
+            "UPDATE users SET refresh_token = $1 WHERE id = $2",
+            [newAccessToken, user.id]
+           )
 
           res.cookie("refreshToken", newRefreshToken, {
             httpOnly: true,
@@ -172,10 +170,10 @@ const authController = {
       const refreshToken = req.cookies?.refreshToken;
 
       if (refreshToken) {
-        await supabase
-          .from("users")
-          .update({ refresh_token: null })
-          .eq("refresh_token", refreshToken);
+        await pool.query(
+          "UPDATE users SET refresh_token = NULL WHERE refresh_token = $1",
+          [refreshToken],
+        );
       }
 
       res.clearCookie("refreshToken", {
