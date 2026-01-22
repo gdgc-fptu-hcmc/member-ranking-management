@@ -144,13 +144,13 @@ const authController = {
           // rotate refresh token (ghi đè)
            await pool.query(
             "UPDATE users SET refresh_token = $1 WHERE id = $2",
-            [newAccessToken, user.id]
+            [newRefreshToken, user.id]
            )
 
           res.cookie("refreshToken", newRefreshToken, {
             httpOnly: true,
             path: "/",
-            sameSite: "strict",
+            sameSite: "lax",
           });
          const { password: _pw, refresh_token: _rt, ...safeUser } = user;
           return res.status(200).json({

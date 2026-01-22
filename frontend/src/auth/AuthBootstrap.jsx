@@ -24,7 +24,9 @@ function AuthBootstrap({children}) {
             }
 
             try {
-                const res = await api.post("/v1/auth/refresh");
+                const res = await api.post("/v1/auth/refresh", {}, {
+                    withCredentials: true,
+                });
 
                 const { accessToken, roles, user} = res.data;
                 if(!alive) return;
