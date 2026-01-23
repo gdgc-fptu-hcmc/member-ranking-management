@@ -32,5 +32,12 @@ const middlewareController = {
       }
     });
   },
+  // Verify user can only access their own data
+  verifySelfAuth: (req, res, next) => {
+    middlewareController.verifyToken(req, res, () => {
+      // For /me endpoints, user can always access their own data
+      next();
+    });
+  },
 };
 export default middlewareController;
