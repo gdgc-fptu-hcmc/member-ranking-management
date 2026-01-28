@@ -16,7 +16,7 @@ const userController = {
           join_club_at, avatar, is_male, address,
           created_at, updated_at
         FROM users 
-        ORDER BY created_at DESC`
+        ORDER BY created_at DESC`,
       );
 
       return res.status(200).json({ users: rows });
@@ -29,8 +29,16 @@ const userController = {
   // POST /v1/users - Create new user (Admin only)
   createUser: async (req, res) => {
     try {
-      const { username, email, password, avatar, isMale, address, clubRole, roles } =
-        req.body;
+      const {
+        username,
+        email,
+        password,
+        avatar,
+        isMale,
+        address,
+        clubRole,
+        roles,
+      } = req.body;
 
       if (!username || !email || !password) {
         return res
@@ -55,7 +63,16 @@ const userController = {
           join_club_at, avatar, is_male, address,
           created_at, updated_at;
         `,
-        [username, email, hashed, avatar || null, isMale || null, address || null, clubRole || null, userRoles]
+        [
+          username,
+          email,
+          hashed,
+          avatar || null,
+          isMale || null,
+          address || null,
+          clubRole || null,
+          userRoles,
+        ],
       );
 
       return res.status(201).json({ user: rows[0] });
@@ -78,23 +95,24 @@ const userController = {
 
       const { rows } = await pool.query(
         "DELETE FROM users WHERE id = $1 RETURNING id, username",
-        [id]
+        [id],
       );
 
       if (rows.length === 0) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: "User deleted successfully",
-        deletedUser: rows[0]
+        deletedUser: rows[0],
       });
     } catch (error) {
       console.log("Delete user error: ", error);
       return res.status(500).json({ error: error.message });
     }
   },
-
+  
+  //
   // =========================================================
   // SELF ENDPOINTS
   // =========================================================
@@ -112,7 +130,7 @@ const userController = {
           created_at, updated_at
         FROM users 
         WHERE id = $1`,
-        [userId]
+        [userId],
       );
 
       if (rows.length === 0) {
@@ -171,7 +189,7 @@ const userController = {
           join_club_at, avatar, is_male, address,
           created_at, updated_at;
         `,
-        values
+        values,
       );
 
       if (rows.length === 0) {
@@ -198,7 +216,7 @@ const userController = {
         FROM users 
         WHERE is_active = true
         ORDER BY total_gems DESC, created_at ASC
-        LIMIT 100`
+        LIMIT 100`,
       );
 
       return res.status(200).json({ ranking: rows });
@@ -222,7 +240,7 @@ const userController = {
           created_at, updated_at
         FROM users 
         WHERE id = $1`,
-        [id]
+        [id],
       );
 
       if (userRows.length === 0) {
@@ -243,7 +261,7 @@ const userController = {
         WHERE gl.user_id = $1
         ORDER BY gl.created_at DESC
         LIMIT 50`,
-        [id]
+        [id],
       );
 
       // Get user's check-ins count
@@ -254,7 +272,7 @@ const userController = {
           COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count
         FROM check_ins
         WHERE user_id = $1`,
-        [id]
+        [id],
       );
 
       // Remove sensitive fields for public view

@@ -28,7 +28,7 @@ const middlewareController = {
       if ( isAdmin || isBDH) {
         next();
       } else {
-        res.status(403).json("you're not allowed to delete other");
+        res.status(403).json("Access denied. You do not have the required permissions");
       }
     });
   },

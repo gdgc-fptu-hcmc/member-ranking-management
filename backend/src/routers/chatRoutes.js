@@ -3,11 +3,9 @@ import {
   getChatHistory,
   getGeminiResponse,
 } from "../controllers/geminiController.js";
-import { optionalAuth } from "../controllers/optionalAuth.js";
 
 const router = express.Router();
 // each req  have guestId(cookie) + if there is token => decode
-router.use(optionalAuth);
 
 router.get("/history", getChatHistory);
 router.post("/send", getGeminiResponse);

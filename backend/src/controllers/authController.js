@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 
 import dotenv from "dotenv";
 import { pool } from "../config/connectDB.js";
-import { upsertChatSessionForUser } from "./chatSessionService.js";
 dotenv.config();
 
 let refreshTokens = [];
@@ -101,12 +100,10 @@ const authController = {
         });
         // trả user safe (bỏ password + refresh_token)
         const { password: _pw, refresh_token: _rt, ...safeUser } = user;
-        const chatSession = await upsertChatSessionForUser(user.id);
         res.status(200).json({
           user: safeUser,
           accessToken,
           roles: user.roles,
-          chatSessionId: chatSession.id
         });
       }
     } catch (error) {
@@ -156,12 +153,10 @@ const authController = {
             sameSite: "lax",
           });
          const { password: _pw, refresh_token: _rt, ...safeUser } = user;
-         const chatSession = await upsertChatSessionForUser(user.id);
           return res.status(200).json({
             accessToken: newAccessToken,
             roles: user.roles,
             user: safeUser,
-            chatSessionId: chatSession.id
           });
         },
       );
