@@ -8,6 +8,7 @@ import Admin from "../pages/Admin.jsx";
 
 import RequireAuth from "../auth/RequireAuth.jsx";
 import RequireRole from "../auth/RequireRole.jsx";
+import Member_Management from "../pages/Member_Management.jsx";
 
 export const routes = [
   { path: "/", element: <LandingPage /> },
@@ -31,5 +32,10 @@ export const routes = [
         <Admin />
       </RequireRole>
     ),
+  },
+
+  {
+    path: "member-mng",
+    element : <Member_Management/>
   },
 ];
