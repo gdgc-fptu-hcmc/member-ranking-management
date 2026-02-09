@@ -21,7 +21,7 @@ export default function Login() {
     try {
       const res = await api.post("/v1/auth/login", form);
       const { accessToken, roles, user } = res.data;
-
+      localStorage.setItem("accessToken", accessToken);
       setAuth({ user, roles, accessToken });
 
       const isAdmin = (roles ?? []).includes("admin");
